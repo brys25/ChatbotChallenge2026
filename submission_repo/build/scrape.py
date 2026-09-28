@@ -16,6 +16,8 @@ from bs4 import BeautifulSoup
 
 SITES = [
     # TODO: the two Inno Wing sites you were given
+    "https://innowings.engg.hku.hk/innowing1/",
+    "https://innowings.engg.hku.hk/innowing-two/",
 ]
 
 
@@ -34,7 +36,13 @@ def crawl(start_url: str, max_pages: int = 500) -> list[str]:
         except Exception:
             continue
         out.append(url)
-
+        print("crawled:", url)
+        
+        for a in BeautifulSoup(html, "html.parser").select("a[href]"):
+            link = urljoin(url, a["href"]).split("#")[0]
+            if urlparse(link).netloc == domain and link not in seen:
+                queue.append(link)
+        
         # TODO find the links on this page and add the internal ones to
         # TODO queue, something like:
         # for a in BeautifulSoup(html, "html.parser").select("a[href]"):
@@ -58,7 +66,11 @@ def extract(html: str, url: str) -> dict:
 
     # TODO replace this with the element that holds the content, e.g.
     # TODO soup.select_one("main") or soup.select_one("#content")
-    body = soup
+    body = soup.select_one("#content")
+    if body is None:
+        body = soup.body or soup
+    for tag in body.select("nav, header, footer"):
+        tag.decompose()
 
     images = []
     for img in soup.select("img"):
@@ -84,10 +96,17 @@ def extract(html: str, url: str) -> dict:
 
 if __name__ == "__main__":
     pages = []
+    processed_urls = set()
     for site in SITES:
         for url in crawl(site):
+            if url in processed_urls:
+                continue
+            processed_urls.add(url)
             try:
-                pages.append(extract(requests.get(url, timeout=20).text, url))
+                page = extract(requests.get(url, timeout=20).text, url)
+                if "page not found" in page["title"].lower():
+                    continue
+                pages.append(page)
             except Exception as exc:
                 print("skipped", url, exc)
 
