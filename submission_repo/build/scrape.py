@@ -32,7 +32,10 @@ def crawl(start_url: str, max_pages: int = 500) -> list[str]:
             continue
         seen.add(url)
         try:
-            html = requests.get(url, timeout=20).text
+            response = requests.get(url, timeout=20)
+            if "text/html" not in response.headers.get("Content-Type", ""):
+                continue
+            html = response.text
         except Exception:
             continue
         out.append(url)
@@ -40,6 +43,10 @@ def crawl(start_url: str, max_pages: int = 500) -> list[str]:
         
         for a in BeautifulSoup(html, "html.parser").select("a[href]"):
             link = urljoin(url, a["href"]).split("#")[0]
+            if urlparse(link).path.lower().endswith(
+                (".jpg", ".jpeg", ".png", ".gif", ".webp", ".pdf", ".zip")
+            ):
+                continue
             if urlparse(link).netloc == domain and link not in seen:
                 queue.append(link)
         
