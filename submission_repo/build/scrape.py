@@ -16,8 +16,8 @@ from bs4 import BeautifulSoup
 
 SITES = [
     # TODO: the two Inno Wing sites you were given
-    "https://innowings.engg.hku.hk/innowing1/",
-    "https://innowings.engg.hku.hk/innowing-two/",
+    "https://innowings.engg.hku.hk/",
+    "https://innoacademy.engg.hku.hk/",
 ]
 
 
